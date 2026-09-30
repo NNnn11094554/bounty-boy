@@ -1,6 +1,12 @@
 import os
+import asyncio
+
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+)
 
 TOKEN = os.getenv("BOT_TOKEN")
 
@@ -24,15 +30,25 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-def main():
+async def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", help_command))
 
     print("BOUNTY bot started!")
-    app.run_polling()
+
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
+
+    try:
+        await asyncio.Event().wait()
+    finally:
+        await app.updater.stop()
+        await app.stop()
+        await app.shutdown()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
